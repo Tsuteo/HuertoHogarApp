@@ -60,7 +60,7 @@ class UsuarioViewModel(private val usuarioDao: UsuarioDao) : ViewModel() {
         viewModelScope.launch {
             val nuevoUsuario = Usuario(
                 nombre = "Juan", apellido = "Perez",
-                email = "juan@duoc.cl", password = "123456",
+                email = "juan@duoc.cl", password = "12345",
                 direccion = "Calle Falsa 123", telefono = "99999999"
             )
             usuarioDao.insertUsuario(nuevoUsuario)
