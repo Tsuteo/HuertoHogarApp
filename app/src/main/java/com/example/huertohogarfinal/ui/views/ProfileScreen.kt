@@ -24,108 +24,80 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import com.example.huertohogarfinal.ui.viewmodel.UsuarioViewModel
+import androidx.compose.foundation.background
+import com.example.huertohogarfinal.ui.theme.BlancoSuave
+import com.example.huertohogarfinal.ui.theme.VerdeEsmeralda
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.ui.text.font.FontWeight
+import com.example.huertohogarfinal.ui.theme.MarronClaro
+import com.example.huertohogarfinal.ui.theme.GrisMedio
+import com.example.huertohogarfinal.ui.theme.GrisOscuro
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(
-    viewModel: UsuarioViewModel,
-    navController: NavController
-) {
-    val context = LocalContext.current
+fun ProfileScreen(viewModel: UsuarioViewModel, navController: NavController) {
+    val usuario = viewModel.usuarioLogueado
 
-    var imageBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    Column(
+        modifier = Modifier.fillMaxSize().background(BlancoSuave).padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            imageVector = Icons.Default.Person,
+            contentDescription = null,
+            modifier = Modifier.size(100.dp).padding(bottom = 16.dp),
+            tint = VerdeEsmeralda
+        )
 
-    val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicturePreview()
-    ) { bitmap ->
-        if (bitmap != null) {
-            imageBitmap = bitmap
-        }
-    }
-
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-
-            cameraLauncher.launch(null)
-        } else {
-            Toast.makeText(context, "Se necesita permiso de cámara", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Mi Perfil") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF2E8B57),
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White
-                )
+        if (usuario != null) {
+            Text(
+                text = "${usuario.nombre} ${usuario.apellido}",
+                style = MaterialTheme.typography.headlineMedium,
+                color = MarronClaro,
+                fontWeight = FontWeight.Bold
             )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // Imagen de Perfil
-            Card(
-                shape = CircleShape,
-                modifier = Modifier.size(150.dp),
-                elevation = CardDefaults.cardElevation(8.dp)
-            ) {
-                if (imageBitmap != null) {
-                    Image(
-                        bitmap = imageBitmap!!.asImageBitmap(),
-                        contentDescription = "Foto de perfil",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                } else {
-                    Icon(
-                        imageVector = Icons.Default.AccountCircle,
-                        contentDescription = null,
-                        modifier = Modifier.fillMaxSize().padding(16.dp),
-                        tint = Color.Gray
-                    )
-                }
-            }
+            Text(usuario.correo, color = GrisMedio)
+            Spacer(modifier = Modifier.height(32.dp))
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Button(
-                onClick = {
-                    val permissionCheckResult = ContextCompat.checkSelfPermission(
-                        context,
-                        Manifest.permission.CAMERA
-                    )
-
-                    if (permissionCheckResult == PackageManager.PERMISSION_GRANTED) {
-                        cameraLauncher.launch(null)
-                    } else {
-                        permissionLauncher.launch(Manifest.permission.CAMERA)
-                    }
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E8B57))
-            ) {
-                Text("Tomar Foto de Perfil")
-            }
+            // Datos
+            InfoCard("Dirección", usuario.direccion)
+            InfoCard("Rol", usuario.rol)
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            Text(text = "Usuario: Juan Perez", style = MaterialTheme.typography.headlineSmall)
-            Text(text = "Email: juan@duoc.cl", style = MaterialTheme.typography.bodyLarge)
-            Text(text = "Dirección: Calle Falsa 123", style = MaterialTheme.typography.bodyLarge)
+            if (usuario.rol == "ADMIN") {
+                Button(
+                    onClick = { navController.navigate("admin_panel") },
+                    colors = ButtonDefaults.buttonColors(containerColor = MarronClaro),
+                    modifier = Modifier.fillMaxWidth().height(50.dp)
+                ) {
+                    Text("Panel de Administración")
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            OutlinedButton(
+                onClick = { navController.navigate("welcome") { popUpTo(0) } },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Cerrar Sesión", color = MaterialTheme.colorScheme.error)
+            }
+        } else {
+            Text("No hay usuario logueado")
+        }
+    }
+}
+
+@Composable
+fun InfoCard(titulo: String, valor: String) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(2.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(titulo, style = MaterialTheme.typography.labelSmall, color = VerdeEsmeralda)
+            Text(valor, style = MaterialTheme.typography.bodyLarge, color = GrisOscuro)
         }
     }
 }

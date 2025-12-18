@@ -4,78 +4,104 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.huertohogarfinal.data.api.RetrofitClient
-import com.example.huertohogarfinal.data.dao.CarritoDao
-import com.example.huertohogarfinal.data.dao.ProductoDao
 import com.example.huertohogarfinal.data.dao.UsuarioDao
-import com.example.huertohogarfinal.data.entities.ItemCarrito
-import com.example.huertohogarfinal.data.entities.Producto
 import com.example.huertohogarfinal.data.entities.Usuario
 import kotlinx.coroutines.launch
-import android.content.Context
-import android.os.Build
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 
-class UsuarioViewModel(private val usuarioDao: UsuarioDao) : ViewModel() {
-
-    var email by mutableStateOf("")
-    var password by mutableStateOf("")
+class UsuarioViewModel(private val dao: UsuarioDao) : ViewModel() {
     var nombre by mutableStateOf("")
+    var apellido by mutableStateOf("")
+    var correo by mutableStateOf("")
+    var direccion by mutableStateOf("")
+    var password by mutableStateOf("")
 
-    var isError by mutableStateOf(false)
-    var mensajeError by mutableStateOf("")
-    var loginExitoso by mutableStateOf(false)
+    var mensajeError by mutableStateOf<String?>(null)
+    var usuarioLogueado by mutableStateOf<Usuario?>(null)
 
-    fun login() {
+    fun validarRegistro(): Boolean {
+        if (nombre.isBlank() || apellido.isBlank() || direccion.isBlank() || password.isBlank()) {
+            mensajeError = "Todos los campos son obligatorios"
+            return false
+        }
+
+        val regex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.(com|cl)$".toRegex()
+        if (!correo.matches(regex)) {
+            mensajeError = "El correo debe contener '@' y terminar en .com o .cl"
+            return false
+        }
+        return true
+    }
+
+    fun registrarCliente(onSuccess: () -> Unit) {
+        if (validarRegistro()) {
+            viewModelScope.launch {
+                val existe = dao.buscarPorCorreo(correo)
+                if (existe == null) {
+                    val nuevo = Usuario(
+                        nombre = nombre, apellido = apellido, correo = correo,
+                        contrasena = password, direccion = direccion, rol = "CLIENTE"
+                    )
+                    dao.insertar(nuevo)
+                    mensajeError = null
+                    limpiarCampos()
+                    onSuccess()
+                } else {
+                    mensajeError = "El correo ya está registrado."
+                }
+            }
+        }
+    }
+
+    fun iniciarSesionCliente(onLoginSuccess: () -> Unit) {
         viewModelScope.launch {
-            if (email.isBlank() || password.isBlank()) {
-                isError = true
-                mensajeError = "Por favor completa todos los campos"
-                return@launch
-            }
-
-            if (password.length < 6) {
-                isError = true
-                mensajeError = "La contraseña debe tener al menos 6 caracteres"
-                return@launch
-            }
-
-            val usuario = usuarioDao.login(email, password)
-
+            val usuario = dao.loginCliente(correo, password)
             if (usuario != null) {
-                loginExitoso = true
-                isError = false
+                usuarioLogueado = usuario
+                mensajeError = null
+                onLoginSuccess()
             } else {
-                isError = true
-                mensajeError = "Credenciales incorrectas"
+                mensajeError = "Credenciales incorrectas o cuenta no es de Cliente."
             }
         }
     }
 
-    fun registrarUsuarioPrueba() {
+    fun iniciarSesionEmpleado(onLoginSuccess: () -> Unit) {
         viewModelScope.launch {
-            val nuevoUsuario = Usuario(
-                nombre = "Juan", apellido = "Perez",
-                email = "juan@duoc.cl", password = "12345",
-                direccion = "Calle Falsa 123", telefono = "99999999"
-            )
-            usuarioDao.insertUsuario(nuevoUsuario)
-            mensajeError = "Usuario de prueba creado"
-            isError = true
+            val usuario = dao.loginEmpleado(correo, password)
+            if (usuario != null) {
+                usuarioLogueado = usuario
+                mensajeError = null
+                onLoginSuccess()
+            } else {
+                mensajeError = "Acceso denegado. No tienes permisos de Empleado."
+            }
         }
     }
-}
 
-class UsuarioViewModelFactory(private val usuarioDao: UsuarioDao) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(UsuarioViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return UsuarioViewModel(usuarioDao) as T
+    fun limpiarCampos() {
+        nombre = ""; apellido = ""; correo = ""; direccion = ""; password = ""
+        mensajeError = null
+    }
+
+
+    val listaEmpleados: StateFlow<List<Usuario>> = dao.obtenerEmpleados()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun crearEmpleado(nombre: String, apellido: String, correo: String, pass: String, direccion: String) {
+        viewModelScope.launch {
+            val nuevo = Usuario(
+                nombre = nombre, apellido = apellido, correo = correo,
+                contrasena = pass, direccion = direccion, rol = "EMPLEADO" // Siempre crea empleados
+            )
+            dao.insertar(nuevo)
         }
-        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+
+    fun eliminarUsuario(usuario: Usuario) {
+        viewModelScope.launch { dao.eliminar(usuario) }
     }
 }
