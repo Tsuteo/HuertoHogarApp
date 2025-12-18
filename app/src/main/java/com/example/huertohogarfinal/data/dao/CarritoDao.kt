@@ -1,20 +1,25 @@
 package com.example.huertohogarfinal.data.dao
 
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.Query
+import androidx.room.*
 import com.example.huertohogarfinal.data.entities.ItemCarrito
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface CarritoDao {
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertar(item: ItemCarrito)
 
-    @Query("SELECT * FROM carrito WHERE estado = 'PENDIENTE'")
-    suspend fun obtenerCarrito(): List<ItemCarrito>
+    @Update
+    suspend fun actualizar(item: ItemCarrito)
 
-    @Query("SELECT SUM(precio * cantidad) FROM carrito WHERE estado = 'PENDIENTE'")
-    suspend fun obtenerTotal(): Int?
+    @Delete
+    suspend fun eliminar(item: ItemCarrito)
+
+    @Query("SELECT * FROM carrito")
+    fun obtenerCarrito(): Flow<List<ItemCarrito>>
+
+    @Query("SELECT * FROM carrito WHERE productoId = :productoId LIMIT 1")
+    suspend fun obtenerPorProductoId(productoId: Int): ItemCarrito?
 
     @Query("DELETE FROM carrito")
     suspend fun vaciarCarrito()
