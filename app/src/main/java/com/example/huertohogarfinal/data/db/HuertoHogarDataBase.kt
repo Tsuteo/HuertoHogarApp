@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 
 @Database(
     entities = [Usuario::class, Producto::class, ItemCarrito::class],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class HuertoHogarDatabase : RoomDatabase() {
@@ -54,12 +54,38 @@ abstract class HuertoHogarDatabase : RoomDatabase() {
             super.onCreate(db)
             INSTANCE?.let { database ->
                 scope.launch(Dispatchers.IO) {
-                    populateDatabase(database.productoDao())
+                    populateDatabase(database.productoDao(), database.usuarioDao())
                 }
             }
         }
 
-        suspend fun populateDatabase(productoDao: ProductoDao) {
+        suspend fun populateDatabase(productoDao: ProductoDao, usuarioDao: UsuarioDao) {
+
+            usuarioDao.insertar(
+                Usuario(
+                    id = 0,
+                    nombre = "Admin",
+                    apellido = "General",
+                    correo = "admin@huerto.cl",
+                    contrasena = "admin123",
+                    direccion = "Casa Matriz",
+                    rol = "ADMIN"
+                )
+            )
+
+            usuarioDao.insertar(
+                Usuario(
+                    id = 0,
+                    nombre = "Pedro",
+                    apellido = "Vendedor",
+                    correo = "vendedor@huerto.cl",
+                    contrasena = "vende123",
+                    direccion = "Sucursal Norte",
+                    rol = "EMPLEADO"
+                )
+            )
+
+
 
             productoDao.insertAll(
                 Producto(0, "FR001", "Manzanas Fuji", 1200, 150, "Manzanas Fuji crujientes...", "Frutas Frescas", "Valle del Maule", "ic_manzana"),
