@@ -1,125 +1,91 @@
 package com.example.huertohogarfinal.ui.viewmodel
 
 import android.content.Context
-import android.os.Build
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
+import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.huertohogarfinal.data.api.RetrofitClient
 import com.example.huertohogarfinal.data.dao.CarritoDao
 import com.example.huertohogarfinal.data.dao.ProductoDao
 import com.example.huertohogarfinal.data.entities.ItemCarrito
 import com.example.huertohogarfinal.data.entities.Producto
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import com.example.huertohogarfinal.data.api.RetrofitClient
-import com.example.huertohogarfinal.data.api.BackendClient
-import com.example.huertohogarfinal.data.api.ProductoBackend
+import kotlinx.coroutines.withContext
 
 class ProductoViewModel(
     private val productoDao: ProductoDao,
     private val carritoDao: CarritoDao
 ) : ViewModel() {
 
-    var listaProductos by mutableStateOf<List<Producto>>(emptyList())
-    var listaCarrito by mutableStateOf<List<ItemCarrito>>(emptyList())
-    var totalCarrito by mutableStateOf(0)
-    var precioDolar by mutableStateOf("Cargando...")
+    val listaProductos: Flow<List<Producto>> = productoDao.obtenerTodos()
 
-    var listaBackend by mutableStateOf<List<ProductoBackend>>(emptyList())
+    var precioDolar by mutableStateOf("Cargando...")
+        private set
 
     init {
-        obtenerProductos()
-        cargarCarrito()
-        obtenerIndicadoresEconomicos()
-        obtenerProductosDeMiBackend()
+        obtenerValorDolar()
     }
 
-    fun obtenerProductos() {
+    private fun obtenerValorDolar() {
         viewModelScope.launch {
-            listaProductos = productoDao.getAllProductos()
+            try {
+                val response = withContext(Dispatchers.IO) {
+                    RetrofitClient.instance.obtenerIndicadores()
+                }
+                precioDolar = response.dolar.valor.toString()
+            } catch (e: Exception) {
+                precioDolar = "Offline"
+            }
         }
     }
 
+    val listaCarrito: Flow<List<ItemCarrito>> = carritoDao.obtenerCarrito()
+
+    val totalCarrito: Flow<Int> = listaCarrito.map { lista ->
+        lista.sumOf { it.total }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), 0)
     fun agregarAlCarrito(producto: Producto, context: Context) {
         viewModelScope.launch {
-            val item = ItemCarrito(nombreProducto = producto.nombre, precio = producto.precio)
-            carritoDao.insertar(item)
-            vibrarTelefono(context)
-            cargarCarrito()
+            val itemExistente = carritoDao.obtenerPorProductoId(producto.id)
+
+            if (itemExistente != null) {
+                val nuevoTotal = (itemExistente.cantidad + 1) * itemExistente.precioUnitario
+                val itemActualizado = itemExistente.copy(
+                    cantidad = itemExistente.cantidad + 1,
+                    total = nuevoTotal
+                )
+                carritoDao.actualizar(itemActualizado)
+            } else {
+                val nuevoItem = ItemCarrito(
+                    productoId = producto.id,
+                    nombreProducto = producto.nombre,
+                    precioUnitario = producto.precio,
+                    cantidad = 1,
+                    total = producto.precio
+                )
+                carritoDao.insertar(nuevoItem)
+            }
         }
     }
 
-    fun cargarCarrito() {
+    fun eliminarItemCarrito(item: ItemCarrito) {
         viewModelScope.launch {
-            listaCarrito = carritoDao.obtenerCarrito()
-            totalCarrito = listaCarrito.sumOf { it.precio }
+            carritoDao.eliminar(item)
         }
     }
 
     fun pagarCarrito(context: Context) {
         viewModelScope.launch {
             carritoDao.vaciarCarrito()
-            cargarCarrito()
-            android.widget.Toast.makeText(context, "¡Compra realizada con éxito!", android.widget.Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "¡Compra realizada con éxito!", Toast.LENGTH_LONG).show()
         }
-    }
-
-    private fun vibrarTelefono(context: Context) {
-        val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val vibratorManager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
-            vibratorManager.defaultVibrator
-        } else {
-            @Suppress("DEPRECATION")
-            context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            vibrator.vibrate(VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE))
-        } else {
-            @Suppress("DEPRECATION")
-            vibrator.vibrate(100)
-        }
-    }
-
-    fun obtenerIndicadoresEconomicos() {
-        viewModelScope.launch {
-            try {
-                val respuesta = RetrofitClient.instance.obtenerIndicadores()
-                precioDolar = "$${respuesta.dolar.valor}"
-            } catch (e: Exception) {
-                precioDolar = "Error"
-                e.printStackTrace()
-            }
-        }
-    }
-
-    fun obtenerProductosDeMiBackend() {
-        viewModelScope.launch {
-            try {
-                listaBackend = BackendClient.service.obtenerProductosBackend()
-                println("✅ ÉXITO: Productos traídos del backend: ${listaBackend.size}")
-            } catch (e: Exception) {
-                println("❌ ERROR BACKEND: Asegúrate que Spring Boot esté corriendo. Error: ${e.message}")
-                e.printStackTrace()
-            }
-        }
-    }
-}
-
-class ProductoViewModelFactory(
-    private val productoDao: ProductoDao,
-    private val carritoDao: CarritoDao
-) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(ProductoViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return ProductoViewModel(productoDao, carritoDao) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

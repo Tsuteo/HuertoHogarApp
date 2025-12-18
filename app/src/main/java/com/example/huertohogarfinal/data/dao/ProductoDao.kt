@@ -3,15 +3,19 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import com.example.huertohogarfinal.data.entities.Producto
-
+import kotlinx.coroutines.flow.Flow
+import androidx.room.OnConflictStrategy
 @Dao
 interface ProductoDao {
-    @Insert
-    suspend fun insertAll(vararg productos: Producto)
-
     @Query("SELECT * FROM productos")
-    suspend fun getAllProductos(): List<Producto>
+    fun obtenerTodos(): Flow<List<Producto>>
 
     @Query("SELECT * FROM productos WHERE categoria = :categoria")
-    suspend fun getProductosPorCategoria(categoria: String): List<Producto>
+    fun obtenerPorCategoria(categoria: String): Flow<List<Producto>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(vararg productos: Producto)
+
+    @Query("SELECT * FROM productos WHERE id = :id LIMIT 1")
+    suspend fun obtenerPorId(id: Int): Producto?
 }

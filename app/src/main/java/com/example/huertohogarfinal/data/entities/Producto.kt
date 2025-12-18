@@ -13,5 +13,5 @@ data class Producto(
     val descripcion: String,
     val categoria: String,
     val origen: String,
-    val imagenUrl: String
+    val imagen: String
 )
