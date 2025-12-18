@@ -1,23 +1,34 @@
 package com.example.huertohogarfinal.ui.views
 
+import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.huertohogarfinal.ui.theme.*
 import com.example.huertohogarfinal.ui.viewmodel.ProductoViewModel
-import androidx.compose.ui.platform.LocalContext
-import android.widget.Toast
-import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Add
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,128 +37,117 @@ fun HomeScreen(
     navController: androidx.navigation.NavController
 ) {
     val context = LocalContext.current
+    val productos by viewModel.listaProductos.collectAsState(initial = emptyList())
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Catálogo") },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF2E8B57),
-                    titleContentColor = Color.White,
-                    actionIconContentColor = Color.White
+            CenterAlignedTopAppBar(
+                title = {
+                    Text(
+                        "Catálogo",
+                        fontWeight = FontWeight.Bold,
+                        color = BlancoSuave
+                    )
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = VerdeEsmeralda,
+                    actionIconContentColor = BlancoSuave
                 ),
                 actions = {
                     IconButton(onClick = { navController.navigate("profile") }) {
-                        Icon(Icons.Default.AccountCircle, contentDescription = "Perfil")
+                        Icon(Icons.Default.AccountCircle, contentDescription = "Perfil", modifier = Modifier.size(28.dp))
                     }
                     IconButton(onClick = { navController.navigate("carrito") }) {
-                        Icon(Icons.Default.ShoppingCart, contentDescription = "Carrito")
+                        BadgedBox(
+                            badge = {
+
+                            }
+                        ) {
+                            Icon(Icons.Default.ShoppingCart, contentDescription = "Carrito", modifier = Modifier.size(28.dp))
+                        }
                     }
                 }
             )
-        }
+        },
+        containerColor = BlancoSuave // Fondo Crema/Hueso
     ) { paddingValues ->
 
-        Column(
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier
                 .padding(paddingValues)
-                .padding(16.dp)
                 .fillMaxSize()
         ) {
 
-            Card(
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E9)),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp)
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
+            item(span = { GridItemSpan(2) }) {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(2.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.ShoppingCart,
-                        contentDescription = null,
-                        tint = Color(0xFF2E8B57)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Column {
-                        Text(
-                            text = "Indicador Económico",
-                            style = MaterialTheme.typography.labelMedium
-                        )
-                        Text(
-                            text = "Dólar Observado: ${viewModel.precioDolar}",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = Color(0xFF2E8B57)
-                        )
-                    }
-                }
-            }
-
-            //Boton para ver si funciona el backend
-            Card(
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD)), // Azulito
-                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "Prueba de Servidor Spring Boot",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = Color.Blue
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Button(
-                        onClick = { viewModel.obtenerProductosDeMiBackend() },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Blue)
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Conectar con Backend")
-                    }
-
-                    Text(
-                        text = "Productos recibidos: ${viewModel.listaBackend.size}",
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
-
-                    if (viewModel.listaBackend.isNotEmpty()) {
-                        Text(
-                            text = "Ejemplo: ${viewModel.listaBackend[0].nombre}",
-                            style = MaterialTheme.typography.bodySmall
-                        )
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(VerdeEsmeralda.copy(alpha = 0.1f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Info,
+                                contentDescription = null,
+                                tint = VerdeEsmeralda
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = "Indicador Económico",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = GrisMedio
+                            )
+                            Text(
+                                text = "Dólar hoy: $${viewModel.precioDolar}",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = GrisOscuro
+                            )
+                        }
                     }
                 }
             }
 
-            Text(
-                text = "Nuestros Productos Frescos",
-                style = MaterialTheme.typography.titleLarge,
-                color = Color(0xFF8B4513)
-            )
+            item(span = { GridItemSpan(2) }) {
+                Text(
+                    text = "Nuestros Productos Frescos",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MarronClaro,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            items(productos) { producto ->
+                ProductoCard(
+                    nombre = producto.nombre,
+                    precio = producto.precio,
+                    categoria = producto.categoria,
+                    onAgregarClick = {
+                        viewModel.agregarAlCarrito(producto, context)
+                        Toast.makeText(context, "¡${producto.nombre} agregado!", Toast.LENGTH_SHORT).show()
+                    }
+                )
+            }
 
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(viewModel.listaProductos) { producto ->
-                    ProductoCard(
-                        nombre = producto.nombre,
-                        precio = producto.precio,
-                        categoria = producto.categoria,
-                        onAgregarClick = {
-                            viewModel.agregarAlCarrito(producto, context)
-                            Toast.makeText(
-                                context,
-                                "Agregado: ${producto.nombre}",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    )
-                }
+            item(span = { GridItemSpan(2) }) {
+                Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }
@@ -160,43 +160,84 @@ fun ProductoCard(
     categoria: String,
     onAgregarClick: () -> Unit
 ) {
-    val context = LocalContext.current
-
     Card(
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF7F7F7)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth()
     ) {
-
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Icon(
-                imageVector = Icons.Default.Home,
-                contentDescription = null,
-                modifier = Modifier.size(48.dp),
-                tint = Color(0xFF2E8B57)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
+            Box(
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(BlancoSuave),
+                contentAlignment = Alignment.Center
+            ) {
+                val icono = when {
+                    categoria.contains("Fruta") -> Icons.Default.Home
+                    categoria.contains("Miel") -> Icons.Default.Home
+                    else -> Icons.Default.Home
+                }
+
+                Icon(
+                    imageVector = icono,
+                    contentDescription = null,
+                    modifier = Modifier.size(40.dp),
+                    tint = VerdeEsmeralda
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
             Text(
                 text = nombre,
-                style = MaterialTheme.typography.bodyLarge,
-                color = Color(0xFF333333)
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = GrisOscuro,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
+
+
             Text(
-                text = "$$precio /kg",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color(0xFF666666)
+                text = categoria,
+                style = MaterialTheme.typography.labelSmall,
+                color = GrisMedio,
+                maxLines = 1
             )
-            Spacer(modifier = Modifier.height(8.dp))
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = "$$precio /kg", // Ajusta si es unidad o kg
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MarronClaro
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
 
             Button(
-                onClick = {
-                    onAgregarClick()
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFD700))
+                onClick = onAgregarClick,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = AmarilloMostaza,
+                    contentColor = GrisOscuro
+                ),
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.fillMaxWidth().height(36.dp),
+                contentPadding = PaddingValues(horizontal = 8.dp)
             ) {
-                Text("Agregar", color = Color.Black)
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Agregar", fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
         }
     }
