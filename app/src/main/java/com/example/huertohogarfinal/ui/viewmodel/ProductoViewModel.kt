@@ -52,10 +52,10 @@ class ProductoViewModel(
     val totalCarrito: Flow<Int> = listaCarrito.map { lista ->
         lista.sumOf { it.total }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), 0)
+
     fun agregarAlCarrito(producto: Producto, context: Context) {
         viewModelScope.launch {
             val itemExistente = carritoDao.obtenerPorProductoId(producto.id)
-
             if (itemExistente != null) {
                 val nuevoTotal = (itemExistente.cantidad + 1) * itemExistente.precioUnitario
                 val itemActualizado = itemExistente.copy(
@@ -86,6 +86,31 @@ class ProductoViewModel(
         viewModelScope.launch {
             carritoDao.vaciarCarrito()
             Toast.makeText(context, "¡Compra realizada con éxito!", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    fun crearProducto(
+        nombre: String,
+        precio: Int,
+        stock: Int,
+        descripcion: String,
+        categoria: String,
+        imagen: String
+    ) {
+        if (nombre.isBlank() || categoria.isBlank()) return
+        viewModelScope.launch {
+            val nuevoProducto = Producto(
+                id = 0,
+                codigo = categoria.take(2).uppercase() + System.currentTimeMillis().toString().takeLast(3),
+                nombre = nombre,
+                precio = precio.coerceAtLeast(0),
+                stock = stock.coerceAtLeast(0),
+                descripcion = descripcion,
+                categoria = categoria,
+                origen = "N/A",
+                imagen = imagen
+            )
+            productoDao.insertAll(nuevoProducto)
         }
     }
 }

@@ -93,8 +93,19 @@ abstract class HuertoHogarDatabase : RoomDatabase() {
                 Producto(0, "FR003", "Plátanos Cavendish", 800, 250, "Plátanos maduros...", "Frutas Frescas", "Ecuador/Chile", "ic_platano"),
                 Producto(0, "VR001", "Zanahorias Orgánicas", 900, 100, "Zanahorias crujientes...", "Verduras Orgánicas", "Región de O'Higgins", "ic_zanahoria"),
                 Producto(0, "VR002", "Espinacas Frescas", 700, 80, "Espinacas frescas...", "Verduras Orgánicas", "Zona Sur", "ic_espinaca"),
-                Producto(0, "PO001", "Miel Orgánica", 5000, 50, "Miel pura...", "Productos Orgánicos", "Sur de Chile", "ic_miel")
+                Producto(0, "PO001", "Miel Orgánica", 5000, 50, "Miel pura...", "Productos Orgánicos", "Sur de Chile", "ic_miel"),
+                Producto(0, "VR003", "Pepinos", 600, 120, "Pepinos frescos y crujientes", "Verduras Frescas", "Zona Central", "ic_pepino"),
+                Producto(0, "FR004", "Peras", 1100, 100, "Peras dulces y jugosas", "Frutas Frescas", "Valle del Maule", "ic_pera"),
+                Producto(0, "VR004", "Pimentón", 1500, 80, "Pimentones de colores", "Verduras Frescas", "Zona Norte", "ic_pimenton"),
+                Producto(0, "PO002", "Quesillo", 2000, 60, "Quesillo artesanal", "Productos Lácteos", "Región Metropolitana", "ic_quesillo"),
+                Producto(0, "VR005", "Tomates Cherry", 1300, 90, "Tomates cherry dulces", "Verduras Frescas", "Zona Sur", "ic_tomate_cherry"),
+                Producto(0, "PO003", "Leche", 900, 200, "Leche fresca pasteurizada", "Productos Lácteos", "Región Metropolitana", "ic_leche"),
+                Producto(0, "VR006", "Lechugas", 700, 150, "Lechugas frescas", "Verduras Frescas", "Zona Norte", "ic_lechuga"),
+                Producto(0, "PO004", "Pan", 500, 180, "Pan recién horneado", "Panadería", "Zona Central", "ic_pan"),
+                Producto(0, "PO005", "Mantequilla", 2500, 70, "Mantequilla natural", "Productos Lácteos", "Región Metropolitana", "ic_mantequilla"),
+                Producto(0, "PO006", "Queso", 3000, 90, "Queso curado artesanal", "Productos Lácteos", "Región Metropolitana", "ic_queso")
             )
+
         }
     }
 }

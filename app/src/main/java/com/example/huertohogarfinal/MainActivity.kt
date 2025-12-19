@@ -19,13 +19,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val database = HuertoHogarDatabase.getDatabase(applicationContext, lifecycleScope)
-
         val usuarioViewModel = UsuarioViewModel(database.usuarioDao())
-
-        val productoViewModel = ProductoViewModel(
-            database.productoDao(),
-            database.carritoDao()
-        )
+        val productoViewModel = ProductoViewModel(database.productoDao(), database.carritoDao())
 
         setContent {
             HuertoHogarFinalTheme {
@@ -82,7 +77,6 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-                    // --- PANTALLAS PRINCIPALES ---
                     composable("home") {
                         HomeScreen(
                             viewModel = productoViewModel,
@@ -103,8 +97,13 @@ class MainActivity : ComponentActivity() {
                             navController = navController
                         )
                     }
+
                     composable("admin_panel") {
-                        AdminPanelScreen(viewModel = usuarioViewModel, navController = navController)
+                        AdminPanelScreen(
+                            usuarioViewModel = usuarioViewModel,
+                            productoViewModel = productoViewModel,
+                            navController = navController
+                        )
                     }
                 }
             }
