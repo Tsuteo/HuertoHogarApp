@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.huertohogarfinal.data.entities.Producto
 import com.example.huertohogarfinal.data.entities.Usuario
 import com.example.huertohogarfinal.ui.theme.*
 import com.example.huertohogarfinal.ui.viewmodel.ProductoViewModel
@@ -29,8 +31,11 @@ fun AdminPanelScreen(
     navController: NavController
 ) {
     val empleados by usuarioViewModel.listaEmpleados.collectAsState()
+    val productos by productoViewModel.listaProductos.collectAsState(initial = emptyList())
+
     var mostrarDialogoEmpleado by remember { mutableStateOf(false) }
     var mostrarDialogoProducto by remember { mutableStateOf(false) }
+    var productoEditar by remember { mutableStateOf<Producto?>(null) }
 
     Scaffold(
         floatingActionButton = {
@@ -68,9 +73,23 @@ fun AdminPanelScreen(
                     CardEmpleado(empleado, onDelete = { usuarioViewModel.eliminarUsuario(empleado) })
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text("Gestión de Productos", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.weight(1f)) {
+                items(productos) { producto ->
+                    CardProducto(
+                        producto = producto,
+                        onDelete = { productoViewModel.eliminarProducto(producto) },
+                        onEdit = { productoEditar = it }
+                    )
+                }
+            }
         }
     }
 
+    // --- DIALOGO CREAR EMPLEADO ---
     if (mostrarDialogoEmpleado) {
         DialogoCrearEmpleado(
             onDismiss = { mostrarDialogoEmpleado = false },
@@ -81,12 +100,34 @@ fun AdminPanelScreen(
         )
     }
 
+    // --- DIALOGO CREAR PRODUCTO ---
     if (mostrarDialogoProducto) {
         DialogoCrearProducto(
             onDismiss = { mostrarDialogoProducto = false },
             onConfirm = { nombre, precio, stock, desc, cat, img ->
                 productoViewModel.crearProducto(nombre, precio, stock, desc, cat, img)
                 mostrarDialogoProducto = false
+            }
+        )
+    }
+
+    // --- DIALOGO EDITAR PRODUCTO ---
+    productoEditar?.let { producto ->
+        DialogoEditarProducto(
+            producto = producto,
+            onDismiss = { productoEditar = null },
+            onConfirm = { nombre, precio, stock, desc, cat, img ->
+                productoViewModel.actualizarProducto(
+                    producto.copy(
+                        nombre = nombre,
+                        precio = precio,
+                        stock = stock,
+                        descripcion = desc,
+                        categoria = cat,
+                        imagen = img
+                    )
+                )
+                productoEditar = null
             }
         )
     }
@@ -110,6 +151,34 @@ fun CardEmpleado(usuario: Usuario, onDelete: () -> Unit) {
             }
             IconButton(onClick = onDelete) {
                 Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = MaterialTheme.colorScheme.error)
+            }
+        }
+    }
+}
+
+@Composable
+fun CardProducto(producto: Producto, onDelete: () -> Unit, onEdit: (Producto) -> Unit) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(4.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(producto.nombre, fontWeight = FontWeight.Bold, color = GrisOscuro)
+                Text("Precio: $${producto.precio}", fontSize = 12.sp, color = GrisMedio)
+                Text("Stock: ${producto.stock}", fontSize = 12.sp, color = VerdeEsmeralda)
+            }
+            Row {
+                IconButton(onClick = { onEdit(producto) }) {
+                    Icon(Icons.Default.Edit, contentDescription = "Editar", tint = AmarilloMostaza)
+                }
+                IconButton(onClick = onDelete) {
+                    Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = MaterialTheme.colorScheme.error)
+                }
             }
         }
     }
@@ -169,9 +238,58 @@ fun DialogoCrearProducto(
             }
         },
         confirmButton = {
-            Button(onClick = { onConfirm(nombre, precio.toInt(), stock.toInt(), descripcion, categoria, imagen) }) {
-                Text("Crear")
+            Button(onClick = {
+                onConfirm(
+                    nombre,
+                    precio.toIntOrNull() ?: 0,
+                    stock.toIntOrNull() ?: 0,
+                    descripcion,
+                    categoria,
+                    imagen
+                )
+            }) { Text("Crear") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } }
+    )
+}
+
+@Composable
+fun DialogoEditarProducto(
+    producto: Producto,
+    onDismiss: () -> Unit,
+    onConfirm: (String, Int, Int, String, String, String) -> Unit
+) {
+    var nombre by remember { mutableStateOf(producto.nombre) }
+    var precio by remember { mutableStateOf(producto.precio.toString()) }
+    var stock by remember { mutableStateOf(producto.stock.toString()) }
+    var descripcion by remember { mutableStateOf(producto.descripcion) }
+    var categoria by remember { mutableStateOf(producto.categoria) }
+    var imagen by remember { mutableStateOf(producto.imagen) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Editar Producto") },
+        text = {
+            Column {
+                OutlinedTextField(nombre, { nombre = it }, label = { Text("Nombre") })
+                OutlinedTextField(precio, { precio = it }, label = { Text("Precio") })
+                OutlinedTextField(stock, { stock = it }, label = { Text("Stock") })
+                OutlinedTextField(descripcion, { descripcion = it }, label = { Text("Descripción") })
+                OutlinedTextField(categoria, { categoria = it }, label = { Text("Categoría") })
+                OutlinedTextField(imagen, { imagen = it }, label = { Text("Nombre imagen drawable") })
             }
+        },
+        confirmButton = {
+            Button(onClick = {
+                onConfirm(
+                    nombre,
+                    precio.toIntOrNull() ?: producto.precio,
+                    stock.toIntOrNull() ?: producto.stock,
+                    descripcion,
+                    categoria,
+                    imagen
+                )
+            }) { Text("Actualizar") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } }
     )

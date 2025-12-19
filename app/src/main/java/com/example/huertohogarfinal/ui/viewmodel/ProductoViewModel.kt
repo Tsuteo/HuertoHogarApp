@@ -113,4 +113,17 @@ class ProductoViewModel(
             productoDao.insertAll(nuevoProducto)
         }
     }
+
+    fun actualizarProducto(producto: Producto) {
+        viewModelScope.launch {
+            productoDao.actualizar(producto)
+        }
+    }
+
+    fun eliminarProducto(producto: Producto) {
+        viewModelScope.launch {
+            productoDao.eliminar(producto)
+        }
+    }
 }
+
