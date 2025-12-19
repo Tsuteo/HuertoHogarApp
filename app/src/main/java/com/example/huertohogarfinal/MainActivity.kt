@@ -90,8 +90,15 @@ class MainActivity : ComponentActivity() {
                         EmployeeLoginScreen(
                             viewModel = usuarioViewModel,
                             onLoginSuccess = {
-                                navController.navigate("home") {
-                                    popUpTo("welcome") { inclusive = true }
+                                val rol = usuarioViewModel.usuarioLogueado?.rol
+                                if (rol == "ADMIN") {
+                                    navController.navigate("home") {
+                                        popUpTo("welcome") { inclusive = true }
+                                    }
+                                } else {
+                                    navController.navigate("seller_mode") {
+                                        popUpTo("welcome") { inclusive = true }
+                                    }
                                 }
                             }
                         )
@@ -123,6 +130,13 @@ class MainActivity : ComponentActivity() {
                         AdminPanelScreen(
                             usuarioViewModel = usuarioViewModel,
                             productoViewModel = productoViewModel,
+                            navController = navController
+                        )
+                    }
+                    composable("seller_mode") {
+                        SellerScreen(
+                            productoViewModel = productoViewModel,
+                            usuarioViewModel = usuarioViewModel,
                             navController = navController
                         )
                     }

@@ -1,6 +1,7 @@
 package com.example.huertohogarfinal.ui.views
 
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -10,10 +11,11 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -28,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.huertohogarfinal.data.entities.Producto
 import com.example.huertohogarfinal.ui.theme.*
 import com.example.huertohogarfinal.ui.viewmodel.ProductoViewModel
 import com.example.huertohogarfinal.ui.viewmodel.UsuarioViewModel
@@ -145,15 +148,14 @@ fun HomeScreen(
 
             items(productos) { producto ->
                 ProductoCard(
-                    nombre = producto.nombre,
-                    precio = producto.precio,
-                    categoria = producto.categoria,
-                    imagen = producto.imagen,
+                    producto = producto,
                     esInvitado = (usuario == null),
                     onAgregarClick = {
                         if (usuario != null) {
                             viewModel.agregarAlCarrito(producto, context)
-                            Toast.makeText(context, "¡${producto.nombre} agregado!", Toast.LENGTH_SHORT).show()
+                            if(producto.stock > 0) {
+                                Toast.makeText(context, "Intentando agregar...", Toast.LENGTH_SHORT).show()
+                            }
                         } else {
                             Toast.makeText(context, "Modo Invitado: Debes registrarte para comprar", Toast.LENGTH_SHORT).show()
                         }
@@ -170,15 +172,12 @@ fun HomeScreen(
 
 @Composable
 fun ProductoCard(
-    nombre: String,
-    precio: Int,
-    categoria: String,
-    imagen: String,
+    producto: Producto,
     esInvitado: Boolean,
     onAgregarClick: () -> Unit
 ) {
     val context = LocalContext.current
-    val resId = context.resources.getIdentifier(imagen, "drawable", context.packageName)
+    val resId = context.resources.getIdentifier(producto.imagen, "drawable", context.packageName)
 
     Card(
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -195,9 +194,9 @@ fun ProductoCard(
                 contentAlignment = Alignment.Center
             ) {
                 if (resId != 0) {
-                    androidx.compose.foundation.Image(
+                    Image(
                         painter = painterResource(id = resId),
-                        contentDescription = nombre,
+                        contentDescription = producto.nombre,
                         modifier = Modifier.size(64.dp)
                     )
                 } else {
@@ -213,7 +212,7 @@ fun ProductoCard(
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = nombre,
+                text = producto.nombre,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = GrisOscuro,
@@ -222,7 +221,7 @@ fun ProductoCard(
             )
 
             Text(
-                text = categoria,
+                text = producto.categoria,
                 style = MaterialTheme.typography.labelSmall,
                 color = GrisMedio,
                 maxLines = 1
@@ -231,32 +230,45 @@ fun ProductoCard(
             Spacer(modifier = Modifier.height(4.dp))
 
             Text(
-                text = "$$precio /kg",
+                text = "$${producto.precio} /kg",
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.SemiBold,
                 color = MarronClaro
             )
 
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = if (producto.stock > 0) "Stock: ${producto.stock}" else "¡AGOTADO!",
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = if (producto.stock > 0) VerdeEsmeralda else MaterialTheme.colorScheme.error
+            )
+
             Spacer(modifier = Modifier.height(12.dp))
+
+            val hayStock = producto.stock > 0
 
             Button(
                 onClick = onAgregarClick,
+                enabled = hayStock,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (esInvitado) GrisMedio else AmarilloMostaza,
-                    contentColor = if (esInvitado) Color.White else GrisOscuro
+                    contentColor = if (esInvitado) Color.White else GrisOscuro,
+                    disabledContainerColor = Color.LightGray,
+                    disabledContentColor = Color.White
                 ),
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.fillMaxWidth().height(36.dp),
                 contentPadding = PaddingValues(horizontal = 8.dp)
             ) {
                 Icon(
-                    imageVector = if (esInvitado) Icons.Default.Lock else Icons.Default.Add,
+                    imageVector = if (!hayStock) Icons.Default.Close else if (esInvitado) Icons.Default.Lock else Icons.Default.Add,
                     contentDescription = null,
                     modifier = Modifier.size(16.dp)
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = if (esInvitado) "Acceder" else "Agregar",
+                    text = if (!hayStock) "Sin Stock" else if (esInvitado) "Acceder" else "Agregar",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold
                 )
