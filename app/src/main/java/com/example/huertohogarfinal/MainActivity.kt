@@ -41,6 +41,9 @@ class MainActivity : ComponentActivity() {
                             onNavigateToEmployee = {
                                 usuarioViewModel.limpiarCampos()
                                 navController.navigate("employee_login")
+                            },
+                            onNavigateToGuest = {
+                                navController.navigate("home")
                             }
                         )
                     }
@@ -97,6 +100,7 @@ class MainActivity : ComponentActivity() {
                     composable("home") {
                         HomeScreen(
                             viewModel = productoViewModel,
+                            usuarioViewModel = usuarioViewModel,
                             navController = navController
                         )
                     }

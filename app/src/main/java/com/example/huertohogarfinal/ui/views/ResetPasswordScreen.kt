@@ -14,6 +14,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.huertohogarfinal.ui.theme.*
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -25,24 +27,24 @@ fun ResetPasswordScreen(
     var token by remember { mutableStateOf("") }
     var nuevaContrasena by remember { mutableStateOf("") }
     var confirmarContrasena by remember { mutableStateOf("") }
-    var paso by remember { mutableStateOf(1) } // 1: solicitar token, 2: resetear contraseña
+    var paso by remember { mutableStateOf(1) }
     var mensaje by remember { mutableStateOf<String?>(null) }
     var mensajeError by remember { mutableStateOf<String?>(null) }
     var cargando by remember { mutableStateOf(false) }
 
+    val scope = rememberCoroutineScope()
+
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Recuperar Contraseña") },
+            CenterAlignedTopAppBar(
+                title = { Text("Recuperar Contraseña", color = BlancoSuave, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onVolverClick) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver", tint = BlancoSuave)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = VerdeEsmeralda,
-                    titleContentColor = BlancoSuave,
-                    navigationIconContentColor = BlancoSuave
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = VerdeEsmeralda
                 )
             )
         }
@@ -61,7 +63,6 @@ fun ResetPasswordScreen(
                 verticalArrangement = Arrangement.Center
             ) {
                 if (paso == 1) {
-                    // Paso 1: Solicitar código de reseteo
                     Text(
                         text = "Ingresa tu correo",
                         style = MaterialTheme.typography.headlineSmall,
@@ -79,7 +80,7 @@ fun ResetPasswordScreen(
 
                     OutlinedTextField(
                         value = correo,
-                        onValueChange = { 
+                        onValueChange = {
                             correo = it
                             mensajeError = null
                         },
@@ -103,13 +104,15 @@ fun ResetPasswordScreen(
                                 mensajeError = "Por favor ingresa tu correo"
                                 return@Button
                             }
-                            cargando = true
-                            mensajeError = null
-                            // Aquí iría la llamada al backend
-                            // Por ahora simulamos
-                            mensaje = "Código enviado. En desarrollo, el código es: 123456"
-                            paso = 2
-                            cargando = false
+
+                            scope.launch {
+                                cargando = true
+                                mensajeError = null
+                                delay(1500)
+                                mensaje = "Código enviado: 123456"
+                                paso = 2
+                                cargando = false
+                            }
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -130,7 +133,6 @@ fun ResetPasswordScreen(
                     }
 
                 } else {
-                    // Paso 2: Resetear contraseña
                     Text(
                         text = "Resetear Contraseña",
                         style = MaterialTheme.typography.headlineSmall,
@@ -148,7 +150,7 @@ fun ResetPasswordScreen(
 
                     OutlinedTextField(
                         value = token,
-                        onValueChange = { 
+                        onValueChange = {
                             token = it
                             mensajeError = null
                         },
@@ -168,7 +170,7 @@ fun ResetPasswordScreen(
 
                     OutlinedTextField(
                         value = nuevaContrasena,
-                        onValueChange = { 
+                        onValueChange = {
                             nuevaContrasena = it
                             mensajeError = null
                         },
@@ -189,7 +191,7 @@ fun ResetPasswordScreen(
 
                     OutlinedTextField(
                         value = confirmarContrasena,
-                        onValueChange = { 
+                        onValueChange = {
                             confirmarContrasena = it
                             mensajeError = null
                         },
@@ -222,15 +224,16 @@ fun ResetPasswordScreen(
                                 mensajeError = "La contraseña debe tener al menos 6 caracteres"
                                 return@Button
                             }
-                            cargando = true
-                            mensajeError = null
-                            // Aquí iría la llamada al backend
-                            // Por ahora simulamos éxito
-                            mensaje = "¡Contraseña actualizada exitosamente!"
-                            cargando = false
-                            // Esperar un momento y volver al login
-                            kotlinx.coroutines.GlobalScope.launch {
-                                kotlinx.coroutines.delay(2000)
+
+                            scope.launch {
+                                cargando = true
+                                mensajeError = null
+                                delay(2000)
+
+                                mensaje = "¡Contraseña actualizada exitosamente!"
+                                cargando = false
+
+                                delay(1500)
                                 onResetSuccess()
                             }
                         },
@@ -262,7 +265,6 @@ fun ResetPasswordScreen(
                     }
                 }
 
-                // Mensajes
                 if (mensaje != null) {
                     Spacer(modifier = Modifier.height(16.dp))
                     Card(

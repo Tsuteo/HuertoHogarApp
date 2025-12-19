@@ -54,7 +54,8 @@ fun LogoHuertoHogar(modifier: Modifier = Modifier) {
 fun WelcomeScreen(
     onNavigateToLogin: () -> Unit,
     onNavigateToRegister: () -> Unit,
-    onNavigateToEmployee: () -> Unit
+    onNavigateToEmployee: () -> Unit,
+    onNavigateToGuest: () -> Unit
 ) {
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -70,7 +71,6 @@ fun WelcomeScreen(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // 1. LOGO
             LogoHuertoHogar()
 
             Spacer(modifier = Modifier.height(60.dp))
@@ -112,6 +112,20 @@ fun WelcomeScreen(
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = VerdeEsmeralda
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            TextButton(
+                onClick = onNavigateToGuest,
+                modifier = Modifier.height(48.dp)
+            ) {
+                Text(
+                    text = "Continuar como invitado",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MarronClaro
                 )
             }
 

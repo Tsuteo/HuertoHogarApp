@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -29,15 +30,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.huertohogarfinal.ui.theme.*
 import com.example.huertohogarfinal.ui.viewmodel.ProductoViewModel
+import com.example.huertohogarfinal.ui.viewmodel.UsuarioViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     viewModel: ProductoViewModel,
+    usuarioViewModel: UsuarioViewModel,
     navController: androidx.navigation.NavController
 ) {
     val context = LocalContext.current
     val productos by viewModel.listaProductos.collectAsState(initial = emptyList())
+    val usuario = usuarioViewModel.usuarioLogueado
 
     Scaffold(
         topBar = {
@@ -48,10 +52,26 @@ fun HomeScreen(
                     actionIconContentColor = BlancoSuave
                 ),
                 actions = {
-                    IconButton(onClick = { navController.navigate("profile") }) {
-                        Icon(Icons.Default.AccountCircle, contentDescription = "Perfil", modifier = Modifier.size(28.dp))
+                    IconButton(onClick = {
+                        if (usuario != null) {
+                            navController.navigate("profile")
+                        } else {
+                            navController.navigate("welcome")
+                        }
+                    }) {
+                        Icon(
+                            imageVector = if (usuario != null) Icons.Default.AccountCircle else Icons.Default.Lock,
+                            contentDescription = "Perfil",
+                            modifier = Modifier.size(28.dp)
+                        )
                     }
-                    IconButton(onClick = { navController.navigate("carrito") }) {
+                    IconButton(onClick = {
+                        if (usuario != null) {
+                            navController.navigate("carrito")
+                        } else {
+                            Toast.makeText(context, "Inicia sesión para ver tu carrito", Toast.LENGTH_SHORT).show()
+                        }
+                    }) {
                         BadgedBox(badge = {}) {
                             Icon(Icons.Default.ShoppingCart, contentDescription = "Carrito", modifier = Modifier.size(28.dp))
                         }
@@ -69,6 +89,23 @@ fun HomeScreen(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.padding(paddingValues).fillMaxSize()
         ) {
+
+            if (usuario == null) {
+                item(span = { GridItemSpan(2) }) {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = AmarilloMostaza),
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                    ) {
+                        Text(
+                            text = "Estás en Modo Invitado. Inicia sesión para comprar.",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = GrisOscuro,
+                            modifier = Modifier.padding(12.dp),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
 
             item(span = { GridItemSpan(2) }) {
                 Card(
@@ -112,9 +149,14 @@ fun HomeScreen(
                     precio = producto.precio,
                     categoria = producto.categoria,
                     imagen = producto.imagen,
+                    esInvitado = (usuario == null),
                     onAgregarClick = {
-                        viewModel.agregarAlCarrito(producto, context)
-                        Toast.makeText(context, "¡${producto.nombre} agregado!", Toast.LENGTH_SHORT).show()
+                        if (usuario != null) {
+                            viewModel.agregarAlCarrito(producto, context)
+                            Toast.makeText(context, "¡${producto.nombre} agregado!", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(context, "Modo Invitado: Debes registrarte para comprar", Toast.LENGTH_SHORT).show()
+                        }
                     }
                 )
             }
@@ -132,6 +174,7 @@ fun ProductoCard(
     precio: Int,
     categoria: String,
     imagen: String,
+    esInvitado: Boolean,
     onAgregarClick: () -> Unit
 ) {
     val context = LocalContext.current
@@ -198,14 +241,25 @@ fun ProductoCard(
 
             Button(
                 onClick = onAgregarClick,
-                colors = ButtonDefaults.buttonColors(containerColor = AmarilloMostaza, contentColor = GrisOscuro),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (esInvitado) GrisMedio else AmarilloMostaza,
+                    contentColor = if (esInvitado) Color.White else GrisOscuro
+                ),
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.fillMaxWidth().height(36.dp),
                 contentPadding = PaddingValues(horizontal = 8.dp)
             ) {
-                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                Icon(
+                    imageVector = if (esInvitado) Icons.Default.Lock else Icons.Default.Add,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp)
+                )
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Agregar", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    text = if (esInvitado) "Acceder" else "Agregar",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }
