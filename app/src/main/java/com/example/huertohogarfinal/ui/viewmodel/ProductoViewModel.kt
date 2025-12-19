@@ -54,7 +54,6 @@ class ProductoViewModel(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), 0)
 
     fun agregarAlCarrito(producto: Producto, context: Context) {
-        // Validación 1: ¿Queda stock general?
         if (producto.stock <= 0) {
             Toast.makeText(context, "¡Producto agotado!", Toast.LENGTH_SHORT).show()
             return
@@ -63,7 +62,6 @@ class ProductoViewModel(
         viewModelScope.launch {
             val itemExistente = carritoDao.obtenerPorProductoId(producto.id)
 
-            // Validación 2: ¿Ya tengo todo el stock disponible en mi carrito?
             val cantidadEnCarrito = itemExistente?.cantidad ?: 0
             if (cantidadEnCarrito >= producto.stock) {
                 withContext(Dispatchers.Main) {
