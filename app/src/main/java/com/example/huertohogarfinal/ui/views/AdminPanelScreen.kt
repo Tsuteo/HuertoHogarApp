@@ -23,6 +23,7 @@ import com.example.huertohogarfinal.data.entities.Usuario
 import com.example.huertohogarfinal.ui.theme.*
 import com.example.huertohogarfinal.ui.viewmodel.ProductoViewModel
 import com.example.huertohogarfinal.ui.viewmodel.UsuarioViewModel
+import androidx.compose.material.icons.filled.Refresh
 
 @Composable
 fun AdminPanelScreen(
@@ -36,6 +37,19 @@ fun AdminPanelScreen(
     var mostrarDialogoEmpleado by remember { mutableStateOf(false) }
     var mostrarDialogoProducto by remember { mutableStateOf(false) }
     var productoEditar by remember { mutableStateOf<Producto?>(null) }
+
+    if (productoViewModel.mensajeBackend != null) {
+        AlertDialog(
+            onDismissRequest = { productoViewModel.limpiarMensajeBackend() },
+            title = { Text("Estado del Servidor") },
+            text = { Text(productoViewModel.mensajeBackend ?: "") },
+            confirmButton = {
+                Button(onClick = { productoViewModel.limpiarMensajeBackend() }) {
+                    Text("Entendido")
+                }
+            }
+        )
+    }
 
     Scaffold(
         floatingActionButton = {
@@ -67,6 +81,41 @@ fun AdminPanelScreen(
             )
             Spacer(modifier = Modifier.height(16.dp))
 
+            Spacer(modifier = Modifier.height(16.dp))
+            Card(
+                colors = CardDefaults.cardColors(containerColor = VerdeEsmeralda.copy(alpha = 0.1f)),
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Sincronización Nube", fontWeight = FontWeight.Bold, color = VerdeEsmeralda)
+                        Text("Verificar conexión con Spring Boot", style = MaterialTheme.typography.bodySmall)
+                    }
+
+                    if (productoViewModel.cargandoBackend) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp), color = VerdeEsmeralda)
+                    } else {
+                        Button(
+                            onClick = { productoViewModel.probarConexionBackend() },
+                            colors = ButtonDefaults.buttonColors(containerColor = VerdeEsmeralda),
+                            contentPadding = PaddingValues(horizontal = 12.dp)
+                        ) {
+                            Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp)) // Usa Refresh o Cloud
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Conectar")
+                        }
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+
             Text("Gestión de Empleados", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.weight(1f)) {
                 items(empleados) { empleado ->
@@ -89,7 +138,8 @@ fun AdminPanelScreen(
         }
     }
 
-    // --- DIALOGO CREAR EMPLEADO ---
+
+
     if (mostrarDialogoEmpleado) {
         DialogoCrearEmpleado(
             onDismiss = { mostrarDialogoEmpleado = false },
@@ -100,7 +150,6 @@ fun AdminPanelScreen(
         )
     }
 
-    // --- DIALOGO CREAR PRODUCTO ---
     if (mostrarDialogoProducto) {
         DialogoCrearProducto(
             onDismiss = { mostrarDialogoProducto = false },
@@ -111,7 +160,6 @@ fun AdminPanelScreen(
         )
     }
 
-    // --- DIALOGO EDITAR PRODUCTO ---
     productoEditar?.let { producto ->
         DialogoEditarProducto(
             producto = producto,
