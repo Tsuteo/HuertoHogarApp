@@ -11,5 +11,6 @@ data class Usuario(
     val correo: String,
     val contrasena: String,
     val direccion: String,
-    val rol: String
+    val rol: String,
+    val fotoPerfil: String? = null
 )
