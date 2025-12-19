@@ -87,7 +87,6 @@ class UsuarioViewModel(private val dao: UsuarioDao) : ViewModel() {
         mensajeError = null
     }
 
-
     val listaEmpleados: StateFlow<List<Usuario>> = dao.obtenerEmpleados()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -95,7 +94,7 @@ class UsuarioViewModel(private val dao: UsuarioDao) : ViewModel() {
         viewModelScope.launch {
             val nuevo = Usuario(
                 nombre = nombre, apellido = apellido, correo = correo,
-                contrasena = pass, direccion = direccion, rol = "EMPLEADO" // Siempre crea empleados
+                contrasena = pass, direccion = direccion, rol = "EMPLEADO"
             )
             dao.insertar(nuevo)
         }
@@ -103,5 +102,12 @@ class UsuarioViewModel(private val dao: UsuarioDao) : ViewModel() {
 
     fun eliminarUsuario(usuario: Usuario) {
         viewModelScope.launch { dao.eliminar(usuario) }
+    }
+
+    fun actualizarUsuario(usuarioActualizado: Usuario) {
+        viewModelScope.launch {
+            dao.actualizar(usuarioActualizado)
+            usuarioLogueado = usuarioActualizado
+        }
     }
 }
