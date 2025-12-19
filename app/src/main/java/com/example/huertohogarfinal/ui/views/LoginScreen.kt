@@ -25,7 +25,8 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun LoginScreen(
     viewModel: UsuarioViewModel,
-    onLoginSuccess: () -> Unit
+    onLoginSuccess: () -> Unit,
+    onNavigateToResetPassword: () -> Unit = {}
 ) {
     Surface(modifier = Modifier.fillMaxSize(), color = BlancoSuave) {
         Column(
@@ -80,7 +81,7 @@ fun LoginScreen(
             )
 
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
-                TextButton(onClick = { /* Toast logic */ }) {
+                TextButton(onClick = onNavigateToResetPassword) {
                     Text("¿Olvidaste tu contraseña?", color = MarronClaro, fontSize = 12.sp)
                 }
             }

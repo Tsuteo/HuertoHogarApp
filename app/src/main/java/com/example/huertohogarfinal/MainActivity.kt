@@ -52,6 +52,23 @@ class MainActivity : ComponentActivity() {
                                 navController.navigate("home") {
                                     popUpTo("welcome") { inclusive = true }
                                 }
+                            },
+                            onNavigateToResetPassword = {
+                                navController.navigate("reset_password")
+                            }
+                        )
+                    }
+
+                    composable("reset_password") {
+                        ResetPasswordScreen(
+                            onVolverClick = {
+                                navController.popBackStack()
+                            },
+                            onResetSuccess = {
+                                navController.navigate("login") {
+                                    popUpTo("login") { inclusive = true }
+                                }
+                                Toast.makeText(applicationContext, "Contraseña actualizada", Toast.LENGTH_SHORT).show()
                             }
                         )
                     }
