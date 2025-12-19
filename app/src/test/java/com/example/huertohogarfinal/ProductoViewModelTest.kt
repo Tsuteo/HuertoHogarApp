@@ -12,6 +12,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
 import android.widget.Toast
+import kotlinx.coroutines.test.advanceUntilIdle
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProductoViewModelTest {
@@ -66,8 +67,24 @@ class ProductoViewModelTest {
 
     @Test
     fun `pagarCarrito vacia la tabla`() = runTest {
-        viewModel.pagarCarrito(mockk(relaxed = true))
-
+        val itemFalso = ItemCarrito(
+            id = 1,
+            productoId = 100,
+            nombreProducto = "Manzana",
+            precioUnitario = 100,
+            cantidad = 1,
+            total = 100
+        )
+        coEvery { carritoDao.obtenerCarrito() } returns flowOf(listOf(itemFalso))
+        coEvery { carritoDao.vaciarCarrito() } just Runs
+        coEvery { productoDao.obtenerPorId(any()) } returns Producto(
+            id = 100, codigo = "C1", nombre = "Manzana", precio = 100, stock = 10,
+            descripcion = "D", categoria = "F", origen = "O", imagen = "img"
+        )
+        coEvery { productoDao.actualizar(any()) } just Runs
+        val viewModelTest = ProductoViewModel(productoDao, carritoDao)
+        viewModelTest.pagarCarrito(mockk(relaxed = true))
+        advanceUntilIdle()
         coVerify { carritoDao.vaciarCarrito() }
     }
 
