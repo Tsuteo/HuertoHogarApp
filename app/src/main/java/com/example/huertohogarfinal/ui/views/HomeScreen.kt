@@ -10,8 +10,9 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -21,14 +22,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.huertohogarfinal.ui.theme.*
 import com.example.huertohogarfinal.ui.viewmodel.ProductoViewModel
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Add
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,13 +42,7 @@ fun HomeScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        "Catálogo",
-                        fontWeight = FontWeight.Bold,
-                        color = BlancoSuave
-                    )
-                },
+                title = { Text("Catálogo", fontWeight = FontWeight.Bold, color = BlancoSuave) },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = VerdeEsmeralda,
                     actionIconContentColor = BlancoSuave
@@ -58,18 +52,14 @@ fun HomeScreen(
                         Icon(Icons.Default.AccountCircle, contentDescription = "Perfil", modifier = Modifier.size(28.dp))
                     }
                     IconButton(onClick = { navController.navigate("carrito") }) {
-                        BadgedBox(
-                            badge = {
-
-                            }
-                        ) {
+                        BadgedBox(badge = {}) {
                             Icon(Icons.Default.ShoppingCart, contentDescription = "Carrito", modifier = Modifier.size(28.dp))
                         }
                     }
                 }
             )
         },
-        containerColor = BlancoSuave // Fondo Crema/Hueso
+        containerColor = BlancoSuave
     ) { paddingValues ->
 
         LazyVerticalGrid(
@@ -77,9 +67,7 @@ fun HomeScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier
-                .padding(paddingValues)
-                .fillMaxSize()
+            modifier = Modifier.padding(paddingValues).fillMaxSize()
         ) {
 
             item(span = { GridItemSpan(2) }) {
@@ -94,31 +82,15 @@ fun HomeScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Box(
-                            modifier = Modifier
-                                .size(48.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(VerdeEsmeralda.copy(alpha = 0.1f)),
+                            modifier = Modifier.size(48.dp).clip(RoundedCornerShape(8.dp)).background(VerdeEsmeralda.copy(alpha = 0.1f)),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Info,
-                                contentDescription = null,
-                                tint = VerdeEsmeralda
-                            )
+                            Icon(Icons.Default.Info, contentDescription = null, tint = VerdeEsmeralda)
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
-                            Text(
-                                text = "Indicador Económico",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = GrisMedio
-                            )
-                            Text(
-                                text = "Dólar hoy: $${viewModel.precioDolar}",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = GrisOscuro
-                            )
+                            Text("Indicador Económico", style = MaterialTheme.typography.labelSmall, color = GrisMedio)
+                            Text("Dólar hoy: $${viewModel.precioDolar}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = GrisOscuro)
                         }
                     }
                 }
@@ -139,6 +111,7 @@ fun HomeScreen(
                     nombre = producto.nombre,
                     precio = producto.precio,
                     categoria = producto.categoria,
+                    imagen = producto.imagen,
                     onAgregarClick = {
                         viewModel.agregarAlCarrito(producto, context)
                         Toast.makeText(context, "¡${producto.nombre} agregado!", Toast.LENGTH_SHORT).show()
@@ -158,8 +131,12 @@ fun ProductoCard(
     nombre: String,
     precio: Int,
     categoria: String,
+    imagen: String,
     onAgregarClick: () -> Unit
 ) {
+    val context = LocalContext.current
+    val resId = context.resources.getIdentifier(imagen, "drawable", context.packageName)
+
     Card(
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
@@ -171,24 +148,23 @@ fun ProductoCard(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(BlancoSuave),
+                modifier = Modifier.size(80.dp).clip(RoundedCornerShape(8.dp)).background(BlancoSuave),
                 contentAlignment = Alignment.Center
             ) {
-                val icono = when {
-                    categoria.contains("Fruta") -> Icons.Default.Home
-                    categoria.contains("Miel") -> Icons.Default.Home
-                    else -> Icons.Default.Home
+                if (resId != 0) {
+                    androidx.compose.foundation.Image(
+                        painter = painterResource(id = resId),
+                        contentDescription = nombre,
+                        modifier = Modifier.size(64.dp)
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier.size(64.dp).background(Color.LightGray),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("No Img", fontSize = 12.sp)
+                    }
                 }
-
-                Icon(
-                    imageVector = icono,
-                    contentDescription = null,
-                    modifier = Modifier.size(40.dp),
-                    tint = VerdeEsmeralda
-                )
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -202,7 +178,6 @@ fun ProductoCard(
                 overflow = TextOverflow.Ellipsis
             )
 
-
             Text(
                 text = categoria,
                 style = MaterialTheme.typography.labelSmall,
@@ -213,7 +188,7 @@ fun ProductoCard(
             Spacer(modifier = Modifier.height(4.dp))
 
             Text(
-                text = "$$precio /kg", // Ajusta si es unidad o kg
+                text = "$$precio /kg",
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.SemiBold,
                 color = MarronClaro
@@ -223,19 +198,12 @@ fun ProductoCard(
 
             Button(
                 onClick = onAgregarClick,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = AmarilloMostaza,
-                    contentColor = GrisOscuro
-                ),
+                colors = ButtonDefaults.buttonColors(containerColor = AmarilloMostaza, contentColor = GrisOscuro),
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.fillMaxWidth().height(36.dp),
                 contentPadding = PaddingValues(horizontal = 8.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp)
-                )
+                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(4.dp))
                 Text("Agregar", fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
